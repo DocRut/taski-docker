@@ -22,16 +22,16 @@ jobs:
     - name: Install system dependencies
       run: |
         sudo apt-get update
-        sudo apt-get install -y libpq-dev python3-dev gcc
+        sudo apt-get install -y libpq-dev python3-dev
 
     - name: Install Python dependencies
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install flake8 flake8-isort
-        pip install -r ./backend/requirements.txt
-    
-    - name: Debug - Show installed packages
-      run: pip list
+        # Сначала устанавливаем основные зависимости без psycopg2
+        pip install Django==3.2.3 djangorestframework==3.12.4 django-cors-headers==3.13.0
+        # Затем устанавливаем psycopg2-binary отдельно
+        pip install psycopg2-binary==2.9.10
     
     - name: Test with flake8
       run: python -m flake8 backend/ --show-source --statistics
