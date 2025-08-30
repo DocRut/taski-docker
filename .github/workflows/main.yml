@@ -10,6 +10,21 @@ jobs:
   tests:
     runs-on: ubuntu-latest
 
+    services:
+      postgres:
+        image: postgres:13
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: test_db
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+
     steps:
     - name: Check out code
       uses: actions/checkout@v3
@@ -28,15 +43,16 @@ jobs:
       run: |
         python -m pip install --upgrade pip setuptools wheel
         pip install flake8 flake8-isort
-        # Сначала устанавливаем основные зависимости без psycopg2
         pip install Django==3.2.3 djangorestframework==3.12.4 django-cors-headers==3.13.0
-        # Затем устанавливаем psycopg2-binary отдельно
         pip install psycopg2-binary==2.9.10
     
     - name: Test with flake8
       run: python -m flake8 backend/ --show-source --statistics
     
     - name: Run Django tests
+      env:
+        DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
+        DJANGO_SETTINGS_MODULE: taski.settings
       run: |
         cd backend/
         python manage.py test --verbosity=2
