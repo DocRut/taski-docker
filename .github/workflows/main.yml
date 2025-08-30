@@ -52,10 +52,33 @@ jobs:
     - name: Run Django tests
       env:
         DATABASE_URL: postgres://postgres:postgres@localhost:5432/test_db
-        DJANGO_SETTINGS_MODULE: taski.settings
+        PYTHONPATH: ${{ github.workspace }}/backend
       run: |
         cd backend/
-        python manage.py test --verbosity=2
+        # Создаем временные настройки для тестов с правильным импортом
+        echo "
+        import os
+        import sys
+        
+        # Добавляем текущую директорию в PYTHONPATH
+        sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+        
+        from backend.settings import *
+        
+        # Используем PostgreSQL для тестов
+        DATABASES = {
+            'default': {
+                'ENGINE': 'django.db.backends.postgresql',
+                'NAME': 'test_db',
+                'USER': 'postgres',
+                'PASSWORD': 'postgres',
+                'HOST': 'localhost',
+                'PORT': '5432',
+            }
+        }
+        " > test_settings.py
+        
+        python manage.py test --settings=test_settings --verbosity=2
 
   build_and_push_to_docker_hub:
     name: Push Docker image to DockerHub
